@@ -24,6 +24,12 @@ const wrapper = d3.select('#wrapper').append('svg')
 
 const bounded = wrapper.append('g')
 .style('transform', `translate(${dimension.margin.left}px,${dimension.margin.top}px)`)
+.attr("tabindex", "0").attr("role", "list") .attr("aria-label", "histogram bars");
+
+// Accessibility
+wrapper.attr("role", "figure") .attr("tabindex", "0");
+wrapper.append("title").text(`Histogram looking at the distribution of ${metric} in 2016`);
+wrapper.selectAll("text") .attr("role", "presentation") .attr("aria-hidden", "true");
 
 // Create Scale
 const xScale=d3.scaleLinear().domain(d3.extent(dataset,metricAccessor)).range([0,dimension.boundedWidth]).nice()
@@ -34,7 +40,13 @@ const bins=binGenerator(dataset);
 const yAccessor=d=>d.length;
 const yScale=d3.scaleLinear().domain([0,d3.max(bins,yAccessor)]).range([dimension.boundedHeight,0]);
 // Draw data
-const barGroups=bounded.selectAll('g').data(bins).enter().append('g');
+const barGroups=bounded.selectAll('g').data(bins).enter().append('g')
+.attr("tabindex", "0")
+.attr("role", "listitem") .attr("aria-label", d => `There were ${
+      yAccessor(d)
+} days between ${ d.x0.toString().slice(0, 4)
+} and ${ d.x1.toString().slice(0, 4)
+} humidity levels.`);
 const barPadding=2;
 const barRect=barGroups.append('rect')
 .attr('x',d=>xScale(d.x0)).attr('y',d=>yScale(yAccessor(d)))
@@ -66,8 +78,6 @@ const xAxisLabel=bounded.append('text').text(`${metric}`)
 .attr('font-size','20px').attr('text-anchor','middle')
 .style('text-transform','capitalize');
 
-// Accessibility
-wrapper.attr("role", "figure");
 
 }
 metrics.forEach(d=>drawBarChart(d));
