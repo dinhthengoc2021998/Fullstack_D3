@@ -1,61 +1,73 @@
-async function drawBarChart() {
-// Access Data
-dataset = await d3.json('./nyc_weather_data.json');
-const metricAccessor= d=>d.humidity;
-const yAccessor=d=>d.length
-// Dimension
-dimensions= {
-    height:600,width:window.innerWidth*0.9,
-    margins:{top:50,bottom:50,left:15,right:15}
-};
-dimensions.boundedWidth=dimensions.width - dimensions.margins.left - dimensions.margins.right;
-dimensions.boundedHeight=dimensions.height-dimensions.margins.top-dimensions.margins.bottom;
-// Create canvas
-const wrapper = d3.select('#wrapper');
-const bounds = wrapper.append('svg')
-    .attr('width',dimensions.width).attr('height',dimensions.height);
-// Create Scale
-const xScale= d3.scaleLinear()
-    .domain(d3.extent(dataset,metricAccessor)).range([0,dimensions.boundedWidth]).nice();
-// create bin
-const binGenerator=d3.histogram()
-    .domain(xScale.domain()).value(metricAccessor).thresholds(12);
-const bins=binGenerator(dataset);
+const metrics = [ "windSpeed", "moonPhase",
+    "dewPoint",
+    "humidity",
+    "uvIndex",
+    "windBearing",
+    "temperatureMin",
+    "temperatureMax",
+];
+async function drawBarChart(metric) {
+//  Access Data
+dataset= await d3.json('./nyc_weather_data.json');
+const metricAccessor= d=>d[metric]
 
-const yScale= d3.scaleLinear()
-    .domain([0,d3.max(bins,yAccessor)]).range([dimensions.boundedHeight,0]).nice();
-// Draw data
-const binGroups= bounds.selectAll('g')
-    .data(bins).enter().append('g');
-const barPadding=1;
-const barRect=binGroups.append('rect')
-    .attr('x',d=>xScale(d.x0)-barPadding).attr('y',d=>yScale(yAccessor(d)))
-    .attr('width',d=>xScale(d.x1)-xScale(d.x0)-barPadding).attr('height',d=>dimensions.boundedHeight-yScale(yAccessor(d)))
-    .attr('fill','cornflowerblue');
-// Add Bar value
-const barValue=binGroups.append('text')
-    .attr('x',d=>(xScale(d.x1)+xScale(d.x0))/2).attr('y',d=>yScale(yAccessor(d))-10)
-    .attr('fill','black').attr('text-anchor','middle')
-    .text(d=>yAccessor(d)).attr('font-size','1.4em')
-// Add xAxis
-const xAxisGenerator=d3.axisBottom().scale(xScale)
-const xAxis=bounds.append('g').call(xAxisGenerator)
-    .style("transform",`translateY(${dimensions.boundedHeight}px)`);
-// Add xAxisLabel
-const xAxisLabel=bounds.append('text')
-    .text('Humidity')
-    .attr('font-size', '2em').attr('text-anchor','middle')
-    .attr('x',dimensions.boundedWidth/2).attr('y',dimensions.height-dimensions.margins.bottom)
-// Add meanLine
-const mean=d3.mean(dataset,metricAccessor);
-const meanLine=bounds.append('g').append('line')
-    .attr('x1',xScale(mean)+barPadding).attr('y1',-15)
-    .attr('x2',xScale(mean)+barPadding).attr('y2',dimensions.boundedHeight)
-    .attr('stroke','maroon').attr('fill', 'red').attr('stroke-width','5px');
-// Add meanLine Label
-const meanLineLabel= bounds.append('text')
-    .attr('x',xScale(mean)+dimensions.margins.left).attr('y',15)
-    .attr('font-size','1.4em').style('stroke','maroon').attr('fill','red').style('text-anchor', 'outside')
-    .text('mean line')
+// dimension
+dimension={
+    height: window.innerWidth*0.2,width: window.innerWidth*0.4,
+    margin:{top:50,bottom:50,left:20,right:20}
 }
-drawBarChart()
+dimension.boundedHeight=dimension.height-dimension.margin.top-dimension.margin.bottom;
+dimension.boundedWidth=dimension.width - dimension.margin.left-dimension.margin.right;
+// create Canvas
+const wrapper = d3.select('#wrapper').append('svg')
+.attr('width',dimension.width).attr('height',dimension.height);
+
+const bounded = wrapper.append('g')
+.style('transform', `translate(${dimension.margin.left}px,${dimension.margin.top}px)`)
+
+// Create Scale
+const xScale=d3.scaleLinear().domain(d3.extent(dataset,metricAccessor)).range([0,dimension.boundedWidth]).nice()
+
+// Create Bins
+const binGenerator= d3.histogram().domain(xScale.domain()).value(metricAccessor).thresholds(20);
+const bins=binGenerator(dataset);
+const yAccessor=d=>d.length;
+const yScale=d3.scaleLinear().domain([0,d3.max(bins,yAccessor)]).range([dimension.boundedHeight,0]);
+// Draw data
+const barGroups=bounded.selectAll('g').data(bins).enter().append('g');
+const barPadding=2;
+const barRect=barGroups.append('rect')
+.attr('x',d=>xScale(d.x0)).attr('y',d=>yScale(yAccessor(d)))
+.attr('width',d=> xScale(d.x1)-xScale(d.x0)-barPadding/2).attr('height',d=> dimension.boundedHeight-yScale(yAccessor(d)))
+.attr('fill','cornflowerblue');
+
+// Data Label
+const barValue=barGroups.append('g').append('text').text(yAccessor)
+.attr('x',d=>(xScale(d.x0)+xScale(d.x1))/2).attr('y',d=>yScale(yAccessor(d))-10)
+.attr('font-size','10px').attr('text-anchor','middle');
+
+// Mean Line
+const mean=d3.mean(dataset,metricAccessor);
+const meanLine= bounded.append('line')
+.attr('x1',xScale(mean)).attr('y1',dimension.boundedHeight)
+.attr('x2',xScale(mean)).attr('y2',-20)
+.attr('stroke-width','5px').attr('stroke','maroon');
+
+const meanLineLabel=bounded.append('text')
+.text(`mean Line of ${metric}`)
+.attr('x',xScale(mean)+10).attr('y',-20).attr('font-size','20px')
+
+
+// Add xAxis
+const xAxisGenerator= d3.axisBottom().scale(xScale)
+const xAxis=bounded.append('g').call(xAxisGenerator).style("transform",`translateY(${dimension.boundedHeight}px)`);
+const xAxisLabel=bounded.append('text').text(`${metric}`)
+.attr("x",xScale(mean)).attr('y',dimension.height-dimension.margin.bottom-10)
+.attr('font-size','20px').attr('text-anchor','middle')
+.style('text-transform','capitalize');
+
+// Accessibility
+wrapper.attr("role", "figure");
+
+}
+metrics.forEach(d=>drawBarChart(d));
