@@ -38,6 +38,7 @@ domain(xScale.domain()).value(metricAccessor).thresholds(12);
 const binGroups=binGenerator(dataset)
 const yScale=d3.scaleLinear().domain([0,d3.max(binGroups,yAccessor)])
 .range([dimension.boundedHeight,0]).nice()
+
 // barRect
 const barGroups=bounded.selectAll('g')
 .data(binGroups).enter().append('g')

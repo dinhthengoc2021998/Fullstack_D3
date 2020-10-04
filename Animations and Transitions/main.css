@@ -1,11 +1,26 @@
-rect {
-    width: 100px;
-    background: cornflowerblue; height: 100px;
-    };
-rect:hover {
+#wrapper rect {
+    fill: cornflowerblue;
+    transition: all 1s ease-out;
+};
+.x-axis-label {
+    fill: black;
+    font-size: 1.4em;
+    text-transform: capitalize;
+}
+text {
+    text-anchor: middle;
+    fill: darkgrey;
+    font-size: 12px;
+    font-family: sans-serif;
+} 
+.mean {
+        stroke: maroon;
+        stroke-dasharray: 2px 4px;
+    }
+/* rect:hover {
     background: yellowgreen; transform: translateX(30px);
     };
 rect {
     background: cornflowerblue; height: 100px;
     width: 100px; transition-duration: 1s;
-    };
+    }; */
